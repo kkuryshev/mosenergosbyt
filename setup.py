@@ -3,13 +3,13 @@ from distutils.core import setup
 setup(
     name='mosenergosbyt',
     packages=['mosenergosbyt'],
-    version='0.1',
+    version='0.1.1',
     license='MIT',
     description='api для работы с порталом мосэнергосбыт',
     author='@kkuryshev',
     author_email='kkurishev@gmail.com',
-    url='https://github.com/kkuryshev/mosenergosbyt/archive/pypi-0_1.tar.gz',
-    download_url='',
+    url='https://github.com/kkuryshev/mosenergosbyt',
+    download_url='https://github.com/kkuryshev/mosenergosbyt/archive/pypi-0_1.tar.gz',
     keywords=['mosenergosbyt', 'MEANINGFULL', 'KEYWORDS'],
     install_requires=[
         'requests'
