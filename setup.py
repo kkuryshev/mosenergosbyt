@@ -8,7 +8,7 @@ setup(
     description='api для работы с порталом мосэнергосбыт',
     author='@kkuryshev',
     author_email='kkurishev@gmail.com',
-    url='https://github.com/kkuryshev/mosenergosbyt',
+    url='https://github.com/kkuryshev/mosenergosbyt/archive/pypi-0_1.tar.gz',
     download_url='',
     keywords=['mosenergosbyt', 'MEANINGFULL', 'KEYWORDS'],
     install_requires=[
