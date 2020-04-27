@@ -56,7 +56,7 @@ class Account:
         :return:
         """
         data = self.__get_measure_imp(proxyquery='Indications')
-        self.measure_list = [Measure(**item) for item in data]
+        self.measure_list = [Measure().update(**item) for item in data]
         return self.measure_list
 
     def get_payment_list(self) -> list:
@@ -72,9 +72,9 @@ class Account:
                 if not obj:
                     _LOGGER.warning('получена информация об оплате показаний, которых нет в списке')
                     continue
-                obj.set_payment(**item)
+                obj.update(**item)
         else:
-            self.measure_list = [Measure(**item) for item in data]
+            self.measure_list = [Measure().update(**item) for item in data]
 
         return self.measure_list
 
@@ -96,6 +96,15 @@ class Account:
             'vl_provider': self.vl_provider
         })
 
+    @property
+    def last_measure(self):
+        if not self.measure_list:
+            raise AccountException(
+                'Отсутствует список переданных показаний'
+            )
+
+        return max(self.measure_list, key=lambda x: x.dt_indication)
+
     def upload_measure(self, measure_day, measure_night=None, measure_middle=None) -> None:
         """
         Передача показаний
@@ -107,6 +116,14 @@ class Account:
         :type measure_middle: int
         :return:
         """
+        year = datetime.now().year
+        month = datetime.now().month
+        date = self.last_measure.indication_date
+        if date.year == year and date.month == month:
+            raise AccountException(
+                'Показания уже были преданы в этом месяце (%s)' % date
+            )
+
         vl_list = {
             'plugin': 'bytProxy',
             'pr_flat_meter': '0',
@@ -126,4 +143,3 @@ class Account:
 
         if not resp[0]['pr_correct']:
             raise AccountException(resp[0]['nm_result'])
-

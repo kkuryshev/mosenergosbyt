@@ -3,7 +3,7 @@ from distutils.core import setup
 setup(
     name='mosenergosbyt',
     packages=['mosenergosbyt'],
-    version='0.1.1',
+    version='0.1.2',
     license='MIT',
     description='api для работы с порталом мосэнергосбыт',
     author='@kkuryshev',
