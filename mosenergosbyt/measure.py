@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 
 DATE_PATTERN = '%Y-%m-%d %H:%M:%S'
 
@@ -22,14 +23,25 @@ class Measure:
         self.vl_t2 = None
         self.vl_t3 = None
 
+    @classmethod
+    def parse(cls, **kwargs):
+        for item in kwargs.items():
+            if not isinstance(item[1], str):
+                continue
+            if re.search(r'^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}', item[1]):
+                kwargs.update(
+                    {
+                        item[0]:
+                            cls.parse_date(item[1])
+                    }
+                )
+        obj = cls()
+        return obj.update(**kwargs)
+
+    @staticmethod
+    def parse_date(str_dt):
+        return datetime.strptime(str_dt, DATE_PATTERN)
+
     def update(self, **kwargs):
         [self.__setattr__(item[0], item[1]) for item in kwargs.items() if item[0] in self.__dict__.keys()]
         return self
-
-    @property
-    def pay_date(self):
-        return datetime.strptime(self.dt_pay,DATE_PATTERN)
-
-    @property
-    def indication_date(self):
-        return datetime.strptime(self.dt_indication,DATE_PATTERN)

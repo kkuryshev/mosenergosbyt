@@ -14,6 +14,10 @@ def check_response(resp):
     j = resp.json()
     _LOGGER.debug(j)
     if not j['success']:
+        if j['err_code'] == 201:
+            raise InvalidSession(
+                j['err_text']
+            )
         raise SessionException(
             'ошибка авторизации'
         )
@@ -42,6 +46,10 @@ def check_auth_response(resp):
 
 
 class SessionException(BaseException):
+    pass
+
+
+class InvalidSession(SessionException):
     pass
 
 
@@ -107,4 +115,9 @@ class Session:
             },
             data=data
         )
-        return check_response(resp)
+        try:
+            return check_response(resp)
+        except InvalidSession as e:
+            logging.info(f'сессия не валидна, нужно сделать переподключение ({e})')
+            self.__session = None
+            self.call(query=query,action=action,data=data)
