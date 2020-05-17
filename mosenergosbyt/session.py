@@ -86,7 +86,7 @@ class Session:
 
         self.call('Init')
 
-    def call(self, query, action='sql', data=None) -> dict:
+    def call(self, query, action='sql', data=None,**kwargs) -> dict:
         """
         адаптер вызова портала
         :param query: наименование операции
@@ -118,6 +118,9 @@ class Session:
         try:
             return check_response(resp)
         except InvalidSession as e:
+            if kwargs.get('retry',False):
+                raise e
+
             logging.info(f'сессия не валидна, нужно сделать переподключение ({e})')
             self.__session = None
-            self.call(query=query,action=action,data=data)
+            return self.call(query=query,action=action,data=data,retry=True)

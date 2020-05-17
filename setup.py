@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
 setup(
     name='mosenergosbyt',
     packages=['mosenergosbyt'],
-    version='0.1.8',
+    version='0.1.11',
     license='MIT',
     description='api для работы с порталом мосэнергосбыт',
     long_description=long_description,

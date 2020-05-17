@@ -18,6 +18,7 @@ class Account:
         Получение базовой информации клиента с портала, которая нужна для последующих вызовов
         :return:
         """
+        self.__meter_list = []
         data = self.session.call('LSList')
         for item in data:
             obj = Meter.parse(session=self.session, **item)
@@ -29,10 +30,7 @@ class Account:
             if balance:
                 obj.get_balance()
 
-
             self.__meter_list.append(obj)
-
-
 
     @property
     def meter_list(self):

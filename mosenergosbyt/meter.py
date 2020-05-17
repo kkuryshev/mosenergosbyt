@@ -2,6 +2,7 @@ from datetime import datetime
 from mosenergosbyt.measure import Measure
 import calendar
 import logging
+import re
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -11,12 +12,12 @@ class MeterException(BaseException):
 
 
 class Meter:
-    def __init__(self,**kwargs):
+    def __init__(self, **kwargs):
         self.session = kwargs['session']
         self.nn_ls = kwargs['nn_ls']
         self.__vl_provider = kwargs['vl_provider']
-        self.id_service = kwargs.get('id_service',None)
-        self.nm_ls_group_full = kwargs.get('nm_ls_group_full',None)
+        self.id_service = kwargs.get('id_service', None)
+        self.nm_ls_group_full = kwargs.get('nm_ls_group_full', None)
         self.nm_provider = kwargs.get('nm_provider', None)
         self.nn_days = None
         self.vl_debt = None
@@ -32,7 +33,7 @@ class Meter:
         return self.__vl_provider
 
     @classmethod
-    def parse(cls,**kwargs):
+    def parse(cls, **kwargs):
         return cls(**kwargs)
 
     def get_measure_list(self) -> list:
@@ -46,13 +47,13 @@ class Meter:
 
     def get_balance(self):
         data = self.__get_measure_imp(proxyquery='CurrentBalance')
-        self.vl_balance = data[0].get('vl_balance',None)
+        self.vl_balance = data[0].get('vl_balance', None)
         self.vl_debt = data[0].get('vl_debt', None)
         return self.measure_list
 
     def get_indication(self):
         data = self.__get_measure_imp(proxyquery='IndicationCounter')
-        self.nn_days = data[0].get('nn_days',None)
+        self.nn_days = data[0].get('nn_days', None)
         return self.measure_list
 
     def get_payment_list(self) -> list:
@@ -101,7 +102,7 @@ class Meter:
 
         return max(self.measure_list, key=lambda x: x.dt_indication)
 
-    def upload_measure(self, measure_day: int, measure_night=None, measure_middle=None) -> None:
+    def upload_measure(self, measure_day: int, measure_night=None, measure_middle=None) -> str:
         """
         Передача показаний
         :param measure_day: дневные показания
@@ -115,10 +116,10 @@ class Meter:
         year = datetime.now().year
         month = datetime.now().month
         date = self.last_measure.dt_indication
-        if date.year == year and date.month == month:
-            raise MeterException(
-                'Показания уже были преданы в этом месяце (%s)' % date
-            )
+        # if date.year == year and date.month == month:
+        #     raise MeterException(
+        #         'Показания уже были преданы в этом месяце (%s)' % date
+        #     )
 
         vl_list = {
             'plugin': 'bytProxy',
@@ -143,4 +144,29 @@ class Meter:
                 text = resp[0]['nm_result']
             raise MeterException(text)
 
-        return resp[0]['nm_result']
+        output = resp[0]['nm_result']
+        output = re.sub(r'(.+)<.*<b>(.+?)\s*<\/b>\s*?(.*?)\s*?<.*$', r'\1\2\3', output)
+
+        _LOGGER.info(output)
+
+        vl_list = {
+            'plugin': 'propagateMesInd',
+            'pr_flat_meter': '0',
+            'proxyquery': 'CalcCharge',
+            'vl_provider': self.vl_provider,
+            'vl_t1': measure_day
+        }
+        if measure_night:
+            vl_list.update({'vl_t2': measure_night})
+        if measure_middle:
+            vl_list.update({'vl_t3': measure_middle})
+
+        resp = self.session.call(
+            'SaveIndications',
+            data=vl_list
+        )
+
+        output1 = resp[0]['nm_result']
+        _LOGGER.info(output1)
+
+        return f'{output} {output1}'
