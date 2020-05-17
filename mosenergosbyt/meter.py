@@ -100,7 +100,13 @@ class Meter:
                 'Отсутствует список переданных показаний'
             )
 
-        return max(self.measure_list, key=lambda x: x.dt_indication)
+        obj = max(self.measure_list, key=lambda x: x.dt_indication)
+        for item in self.measure_list:
+            if item == obj:
+                continue
+            obj.update(**item.dict)
+
+        return obj
 
     def upload_measure(self, measure_day: int, measure_night=None, measure_middle=None) -> str:
         """

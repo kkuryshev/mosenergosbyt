@@ -43,5 +43,13 @@ class Measure:
         return datetime.strptime(str_dt, DATE_PATTERN)
 
     def update(self, **kwargs):
-        [self.__setattr__(item[0], item[1]) for item in kwargs.items() if item[0] in self.__dict__.keys()]
+        [
+            self.__setattr__(item[0], item[1])
+            for item in kwargs.items()
+            if item[0] in self.__dict__.keys() and not self.__getattribute__(item[0])
+        ]
         return self
+
+    @property
+    def dict(self):
+        return self.__dict__
