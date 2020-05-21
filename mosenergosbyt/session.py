@@ -1,8 +1,16 @@
 import logging
 from requests import session
+from requests.exceptions import Timeout, RequestException
+from mosenergosbyt.exceptions import *
 import json
 
 _LOGGER = logging.getLogger(__name__)
+
+if _LOGGER.getEffectiveLevel() == 10:  # DEBUG
+    import http
+    http_client = logging.getLogger('urllib3.connectionpool')
+    http_client.setLevel(logging.INFO)
+    http.client.HTTPConnection.debuglevel = 1
 
 
 def check_response(resp):
@@ -45,14 +53,6 @@ def check_auth_response(resp):
     return data
 
 
-class SessionException(BaseException):
-    pass
-
-
-class InvalidSession(SessionException):
-    pass
-
-
 class Session:
     __session = None
 
@@ -86,7 +86,7 @@ class Session:
 
         self.call('Init')
 
-    def call(self, query, action='sql', data=None,**kwargs) -> dict:
+    def call(self, query, action='sql', data=None, **kwargs) -> dict:
         """
         адаптер вызова портала
         :param query: наименование операции
@@ -101,26 +101,34 @@ class Session:
         if not self.__session:
             self.__establish()
 
-        resp = self.__session.post(
-            'https://my.mosenergosbyt.ru/gate_lkcomu',
-            headers={
-                'Sec-Fetch-Dest': 'empty',
-                'Sec-Fetch-Mode': 'cors',
-                'Sec-Fetch-Site': 'same-origin'
-            },
-            params={
-                'action': action,
-                'query': query,
-                'session': self.token
-            },
-            data=data
-        )
+        try:
+            resp = self.__session.post(
+                'https://my.mosenergosbyt.ru/gate_lkcomu',
+                headers={
+                    'Sec-Fetch-Dest': 'empty',
+                    'Sec-Fetch-Mode': 'cors',
+                    'Sec-Fetch-Site': 'same-origin'
+                },
+                params={
+                    'action': action,
+                    'query': query,
+                    'session': self.token
+                },
+                data=data,
+                timeout=kwargs.get('timeout', None)
+            )
+        except RequestException as e:
+            if isinstance(e, Timeout):
+                raise SessionTimeout(e)
+            else:
+                raise SessionException(e)
+
         try:
             return check_response(resp)
         except InvalidSession as e:
-            if kwargs.get('retry',False):
+            if kwargs.get('retry', False):
                 raise e
 
             logging.info(f'сессия не валидна, нужно сделать переподключение ({e})')
             self.__session = None
-            return self.call(query=query,action=action,data=data,retry=True)
+            return self.call(query=query, action=action, data=data, retry=True)

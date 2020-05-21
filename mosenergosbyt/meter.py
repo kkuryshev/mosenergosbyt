@@ -1,14 +1,11 @@
 from datetime import datetime
 from mosenergosbyt.measure import Measure
+from mosenergosbyt.exceptions import *
 import calendar
 import logging
 import re
 
 _LOGGER = logging.getLogger(__name__)
-
-
-class MeterException(BaseException):
-    pass
 
 
 class Meter:
@@ -41,18 +38,32 @@ class Meter:
         Получение списка переданных ранее показаний
         :return:
         """
-        data = self.__get_measure_imp(proxyquery='Indications')
+        try:
+            data = self.__get_measure_imp(proxyquery='Indications')
+        except SessionTimeout:
+            _LOGGER.warning('произошел таймаут обращения к порталу при получении списка переданных показаний')
+            return []
+
         self.measure_list = [Measure.parse(**item) for item in data]
         return self.measure_list
 
-    def get_balance(self):
-        data = self.__get_measure_imp(proxyquery='CurrentBalance')
+    def get_balance(self) -> list:
+        try:
+            data = self.__get_measure_imp(proxyquery='CurrentBalance')
+        except SessionTimeout:
+            _LOGGER.warning('произошел таймаут обращения к порталу при получении баланса')
+            return []
         self.vl_balance = data[0].get('vl_balance', None)
         self.vl_debt = data[0].get('vl_debt', None)
         return self.measure_list
 
-    def get_indication(self):
-        data = self.__get_measure_imp(proxyquery='IndicationCounter')
+    def get_indication(self) -> list:
+        try:
+            data = self.__get_measure_imp(proxyquery='IndicationCounter')
+        except SessionTimeout:
+            _LOGGER.warning('произошел таймаут обращения к порталу при получении списка переданных показаний')
+            return []
+
         self.nn_days = data[0].get('nn_days', None)
         return self.measure_list
 
@@ -61,13 +72,20 @@ class Meter:
         Получение списка оплат
         :return:
         """
-        data = self.__get_measure_imp(proxyquery='Pays')
+        try:
+            data = self.__get_measure_imp(proxyquery='Pays')
+        except SessionTimeout:
+            _LOGGER.warning('произошел таймаут обращения к порталу при получении списка оплат')
+            return []
+
         if self.measure_list:
-            mld = {item.dt_indication: item for item in self.measure_list}
+            mld = {item.dt_indication.month: item for item in self.measure_list}
             for item in data:
-                obj = mld.get(Measure.parse_date(item['dt_pay']), None)
+                obj = mld.get(Measure.parse_date(item['dt_pay']).month, None)
                 if not obj:
-                    _LOGGER.warning('получена информация об оплате показаний, которых нет в списке')
+                    _LOGGER.warning(
+                        f'получена информация об оплате показаний, которых нет в списке ({item["dt_pay"]})'
+                    )
                     continue
                 obj.update(**item)
         else:
@@ -85,13 +103,17 @@ class Meter:
         month = datetime.now().month
         last_date = calendar.monthrange(year, month)[1]
 
-        return self.session.call('bytProxy', data={
-            'dt_en': datetime(year, month, last_date, 23, 59, 59).astimezone().isoformat(),
-            'dt_st': datetime(year, month - 2, 1).astimezone().isoformat(),
-            'plugin': 'bytProxy',
-            'proxyquery': proxyquery,
-            'vl_provider': self.vl_provider
-        })
+        return self.session.call(
+            'bytProxy',
+            data={
+                'dt_en': datetime(year, month, last_date, 23, 59, 59).astimezone().isoformat(),
+                'dt_st': datetime(year, month - 2, 1).astimezone().isoformat(),
+                'plugin': 'bytProxy',
+                'proxyquery': proxyquery,
+                'vl_provider': self.vl_provider
+            },
+            timeout=5.0
+        )
 
     @property
     def last_measure(self):
