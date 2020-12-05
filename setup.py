@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
 setup(
     name='mosenergosbyt',
     packages=['mosenergosbyt'],
-    version='0.1.14',
+    version='0.1.15',
     license='MIT',
     description='api для работы с порталом мосэнергосбыт',
     long_description=long_description,
@@ -17,10 +17,10 @@ setup(
     author='@kkuryshev',
     author_email='kkurishev@gmail.com',
     url='https://github.com/kkuryshev/mosenergosbyt',
-    download_url='https://github.com/kkuryshev/mosenergosbyt/archive/pypi-0_1.tar.gz',
     keywords=['mosenergosbyt', 'MEANINGFULL', 'KEYWORDS'],
     install_requires=[
-        'requests'
+        'requests',
+        'argparse'
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -32,4 +32,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
+    entry_points = {
+        'console_scripts': ['mosenergosbyt=mosenergosbyt.command_line:main'],
+    }
 )
