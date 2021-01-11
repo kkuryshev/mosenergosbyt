@@ -6,12 +6,12 @@ colorama==0.4.4
 docutils==0.16
 idna==2.9
 keyring==21.5.0
--e git+git@192.168.2.200:home/mosenergosbyt.git@c09c3fd3951afcd4cc1f00568ae2292de999a05c#egg=mosenergosbyt
 packaging==20.7
 pkginfo==1.6.1
 pycodestyle==2.6.0
 Pygments==2.7.2
 pyparsing==2.4.7
+python-dateutil==2.8.1
 readme-renderer==28.0
 requests==2.23.0
 requests-toolbelt==0.9.1

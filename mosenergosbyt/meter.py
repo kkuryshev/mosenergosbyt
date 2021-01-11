@@ -1,9 +1,11 @@
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from mosenergosbyt.measure import Measure
 from mosenergosbyt.exceptions import *
 import calendar
 import logging
 import re
+from dateutil.relativedelta import relativedelta
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -100,14 +102,15 @@ class Meter:
         :return:
         """
         year = datetime.now().year
-        month = datetime.now().month
+        month = datetime.now().month 
         last_date = calendar.monthrange(year, month)[1]
+        two_month_ago = datetime.today() - relativedelta(months=2)
 
         return self.session.call(
             'bytProxy',
             data={
                 'dt_en': datetime(year, month, last_date, 23, 59, 59).astimezone().isoformat(),
-                'dt_st': datetime(year, month - 2, 1).astimezone().isoformat(),
+                'dt_st': two_month_ago.astimezone().isoformat(),
                 'plugin': 'bytProxy',
                 'proxyquery': proxyquery,
                 'vl_provider': self.vl_provider
